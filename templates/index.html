@@ -161,7 +161,11 @@
   document.getElementById("btn3D").addEventListener("click", () => {
     document.getElementById("mapa-2d").style.display = "none";
     document.getElementById("mapa-3d").style.display = "block";
-    setTimeout(() => viewer.resize(), 200); // espera a que el div se muestre antes de hacer resize
+    // Forzar re-render con delay
+    setTimeout(() => {
+      viewer.scene.requestRender();
+      viewer.resize();
+    }, 300);
   });
 
   // 🔍 Formulario
