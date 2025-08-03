@@ -93,114 +93,117 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <script>
-    // Leaflet
-    const map2d = L.map('mapa-2d').setView([-0.3775, -78.1438], 10);
-    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-    }).addTo(map2d);
+  // MAPA 2D Leaflet
+  const map2d = L.map('mapa-2d').setView([-0.3775, -78.1438], 10);
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
+  }).addTo(map2d);
 
-    const plantaCoords = [-0.18065948173307056, -78.4613084503937];
-    let plantaMarker = L.marker(plantaCoords).addTo(map2d).bindPopup("🏭 Planta Bellavista");
+  const plantaCoords = [-0.18065948173307056, -78.4613084503937];
+  let plantaMarker = L.marker(plantaCoords).addTo(map2d).bindPopup("🏭 Planta Bellavista");
 
-    const otrosMarkers = [
-      { coords: [-0.3551660396455742, -78.08513557183424], label: "📍 H13 - Chalpi Grande" },
-      { coords: [-0.3774923958873509, -78.1437783896944], label: "📍 H34 - Papallacta" },
-      { coords: [-0.3842207347551541, -78.14559505947328], label: "📍 H36 - Tuminguina" },
-      { coords: [-0.226911, -78.162229], label: "🛑 Punto de Abastecimiento: SalvaFaccha" }
-    ];
-    otrosMarkers.forEach(m => L.marker(m.coords).addTo(map2d).bindPopup(m.label));
+  const otrosMarkers = [
+    { coords: [-0.3551660396455742, -78.08513557183424], label: "📍 H13 - Chalpi Grande" },
+    { coords: [-0.3774923958873509, -78.1437783896944], label: "📍 H34 - Papallacta" },
+    { coords: [-0.3842207347551541, -78.14559505947328], label: "📍 H36 - Tuminguina" },
+    { coords: [-0.226911, -78.162229], label: "🛑 Punto de Abastecimiento: SalvaFaccha" }
+  ];
+  otrosMarkers.forEach(m => L.marker(m.coords).addTo(map2d).bindPopup(m.label));
 
-    function actualizarSemaforo(nivel) {
-      let color = "green", icono = "🟢", mensaje = "Sin riesgo significativo";
-      if (nivel === "medio") { color = "orange"; icono = "🟠"; mensaje = "Riesgo moderado"; }
-      else if (nivel === "alto") { color = "red"; icono = "🔴"; mensaje = "¡Riesgo crítico!"; }
+  function actualizarSemaforo(nivel) {
+    let color = "green", icono = "🟢", mensaje = "Sin riesgo significativo";
+    if (nivel === "medio") { color = "orange"; icono = "🟠"; mensaje = "Riesgo moderado"; }
+    else if (nivel === "alto") { color = "red"; icono = "🔴"; mensaje = "¡Riesgo crítico!"; }
 
-      const icon = L.divIcon({
-        html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:2px solid #000;
-                display:flex;align-items:center;justify-content:center;font-size:16px;">${icono}</div>`,
-        className: '', iconSize: [30, 30]
-      });
-
-      plantaMarker.setIcon(icon);
-      plantaMarker.setPopupContent(`🏭 Planta Bellavista<br><strong>${icono} ${mensaje}</strong>`);
-    }
-
-    // Cesium
-    const viewer = new Cesium.Viewer('mapa-3d', {
-      terrainProvider: Cesium.createWorldTerrain(),
-      animation: false, timeline: false
+    const icon = L.divIcon({
+      html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:2px solid #000;
+              display:flex;align-items:center;justify-content:center;font-size:16px;">${icono}</div>`,
+      className: '', iconSize: [30, 30]
     });
 
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(-78.4613, -0.1806, 5000)
-    });
+    plantaMarker.setIcon(icon);
+    plantaMarker.setPopupContent(`🏭 Planta Bellavista<br><strong>${icono} ${mensaje}</strong>`);
+  }
 
+  // MAPA 3D Cesium
+  const viewer = new Cesium.Viewer('mapa-3d', {
+    terrainProvider: Cesium.createWorldTerrain(),
+    animation: false,
+    timeline: false
+  });
+
+  viewer.camera.flyTo({
+    destination: Cesium.Cartesian3.fromDegrees(-78.4613, -0.1806, 5000)
+  });
+
+  viewer.entities.add({
+    name: "Planta Bellavista",
+    position: Cesium.Cartesian3.fromDegrees(-78.4613, -0.1806),
+    point: { pixelSize: 10, color: Cesium.Color.CYAN }
+  });
+
+  otrosMarkers.forEach(m => {
     viewer.entities.add({
-      name: "Planta Bellavista",
-      position: Cesium.Cartesian3.fromDegrees(-78.4613, -0.1806),
-      point: { pixelSize: 10, color: Cesium.Color.CYAN }
+      name: m.label,
+      position: Cesium.Cartesian3.fromDegrees(m.coords[1], m.coords[0]),
+      point: { pixelSize: 8, color: Cesium.Color.YELLOW }
     });
+  });
 
-    otrosMarkers.forEach(m => {
-      viewer.entities.add({
-        name: m.label,
-        position: Cesium.Cartesian3.fromDegrees(m.coords[1], m.coords[0]),
-        point: { pixelSize: 8, color: Cesium.Color.YELLOW }
+  // 🔁 Toggle entre mapas
+  document.getElementById("btn2D").addEventListener("click", () => {
+    document.getElementById("mapa-2d").style.display = "block";
+    document.getElementById("mapa-3d").style.display = "none";
+    map2d.invalidateSize(); // actualiza el tamaño de Leaflet
+  });
+
+  document.getElementById("btn3D").addEventListener("click", () => {
+    document.getElementById("mapa-2d").style.display = "none";
+    document.getElementById("mapa-3d").style.display = "block";
+    setTimeout(() => viewer.resize(), 200); // espera a que el div se muestre antes de hacer resize
+  });
+
+  // 🔍 Formulario
+  document.getElementById("formulario").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const fecha = document.getElementById("fecha").value;
+    const error = document.getElementById("error");
+    const cargando = document.getElementById("cargando");
+    error.style.display = "none";
+    cargando.style.display = "block";
+    document.getElementById("resultado").style.display = "none";
+
+    try {
+      const res = await fetch("/predecir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fecha })
       });
-    });
 
-    // Alternar mapas
-    document.getElementById("btn2D").addEventListener("click", () => {
-      document.getElementById("mapa-2d").style.display = "block";
-      document.getElementById("mapa-3d").style.display = "none";
-    });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al obtener la predicción.");
 
-    document.getElementById("btn3D").addEventListener("click", () => {
-      document.getElementById("mapa-2d").style.display = "none";
-      document.getElementById("mapa-3d").style.display = "block";
-      viewer.resize();
-    });
+      document.getElementById("fecha_resultado").textContent = data.fecha;
+      document.getElementById("caudal").textContent = data.caudal_estimado;
+      document.getElementById("temperatura").textContent = data.temperatura;
+      document.getElementById("precipitacion").textContent = data.precipitacion;
+      document.getElementById("analisis_ia").innerHTML = data.analisis_ia || "<p>No disponible</p>";
+      document.getElementById("resultado").style.display = "block";
 
-    // Formulario
-    document.getElementById("formulario").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      const fecha = document.getElementById("fecha").value;
-      const error = document.getElementById("error");
-      const cargando = document.getElementById("cargando");
-      error.style.display = "none";
-      cargando.style.display = "block";
-      document.getElementById("resultado").style.display = "none";
+      const conclusion = data.analisis_ia.toLowerCase();
+      let alerta = "bajo";
+      if (conclusion.includes("rojo")) alerta = "alto";
+      else if (conclusion.includes("amarillo")) alerta = "medio";
+      actualizarSemaforo(alerta);
+    } catch (err) {
+      error.textContent = err.message;
+      error.style.display = "block";
+    } finally {
+      cargando.style.display = "none";
+    }
+  });
+</script>
 
-      try {
-        const res = await fetch("/predecir", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fecha })
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Error al obtener la predicción.");
-
-        document.getElementById("fecha_resultado").textContent = data.fecha;
-        document.getElementById("caudal").textContent = data.caudal_estimado;
-        document.getElementById("temperatura").textContent = data.temperatura;
-        document.getElementById("precipitacion").textContent = data.precipitacion;
-        document.getElementById("analisis_ia").innerHTML = data.analisis_ia || "<p>No disponible</p>";
-        document.getElementById("resultado").style.display = "block";
-
-        const conclusion = data.analisis_ia.toLowerCase();
-        let alerta = "bajo";
-        if (conclusion.includes("rojo")) alerta = "alto";
-        else if (conclusion.includes("amarillo")) alerta = "medio";
-        actualizarSemaforo(alerta);
-      } catch (err) {
-        error.textContent = err.message;
-        error.style.display = "block";
-      } finally {
-        cargando.style.display = "none";
-      }
-    });
-  </script>
 </body>
 </html>

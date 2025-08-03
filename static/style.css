@@ -199,5 +199,13 @@ footer {
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
   font-size: 1rem;
 }
+#mapa-2d, #mapa-3d {
+  width: 100%;
+  height: 500px;
+}
+#mapa-3d {
+  display: none;
+}
+
 
 }
