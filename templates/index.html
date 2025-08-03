@@ -5,12 +5,20 @@
   <title>Predicción Hídrica Sistema Papallacta - Bellavista</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap + Leaflet -->
+  <!-- Bootstrap + Leaflet + Mapbox GL -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
+  <style>
+    #map2d, #map3d {
+      width: 100%;
+      height: 500px;
+    }
+    #map3d { display: none; }
+  </style>
 </head>
 <body>
   <div class="main-container">
@@ -19,11 +27,18 @@
       <p class="text-center text-secondary mb-0 subtitulo">Sistema Papallacta - Bellavista</p>
     </header>
 
-    <!-- 🌍 Mapa -->
-    <div id="map"></div>
+    <!-- Selector de mapa -->
+    <div class="text-center my-3">
+      <button id="btn2d" class="btn btn-outline-primary me-2">🗺️ Mapa 2D</button>
+      <button id="btn3d" class="btn btn-outline-secondary">🌍 Mapa 3D</button>
+    </div>
 
-    <!-- 📆 Formulario -->
-    <form id="formulario" class="row g-3">
+    <!-- Contenedores de mapas -->
+    <div id="map2d"></div>
+    <div id="map3d"></div>
+
+    <!-- Formulario -->
+    <form id="formulario" class="row g-3 my-3">
       <div class="col-md-6">
         <label for="fecha" class="form-label">Selecciona una fecha futura (YYYY-MM):</label>
         <input type="month" id="fecha" name="fecha" class="form-control" required>
@@ -33,13 +48,13 @@
       </div>
     </form>
 
-    <!-- ⏳ Indicador de carga -->
-    <div id="cargando" class="text-center my-3">
+    <!-- Cargando -->
+    <div id="cargando" class="text-center my-3" style="display: none;">
       <div class="spinner-border text-primary" role="status"></div>
       <p class="mt-2 fw-semibold text-primary">Procesando análisis, por favor espera...</p>
     </div>
 
-    <!-- 📈 Resultado -->
+    <!-- Resultado -->
     <div id="resultado" class="resultado" style="display:none;">
       <h4 class="mb-3">📅 Fecha: <span id="fecha_resultado"></span></h4>
       <div class="row mb-2">
@@ -68,26 +83,26 @@
       </div>
     </div>
 
-    <!-- ⚠️ Error -->
     <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
   </div>
-  <footer>
+
+  <footer class="text-center mt-4 mb-3">
     &copy; 2024 Predicción Hídrica Inteligente · Sistema Papallacta - Bellavista
   </footer>
 
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <script>
-    const map = L.map('map').setView([-0.3775, -78.1438], 10);
+    // Leaflet - Mapa 2D
+    const map2d = L.map('map2d').setView([-0.3775, -78.1438], 10);
     L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
-    }).addTo(map);
+    }).addTo(map2d);
 
     const plantaCoords = [-0.18065948173307056, -78.4613084503937];
-    let plantaMarker = L.marker(plantaCoords).addTo(map).bindPopup("🏭 Planta Bellavista");
+    let plantaMarker = L.marker(plantaCoords).addTo(map2d).bindPopup("🏭 Planta Bellavista");
 
     const otrosMarkers = [
       { coords: [-0.3551660396455742, -78.08513557183424], label: "📍 H13 - Chalpi Grande" },
@@ -95,16 +110,12 @@
       { coords: [-0.3842207347551541, -78.14559505947328], label: "📍 H36 - Tuminguina" },
       { coords: [-0.226911, -78.162229], label: "🛑 Punto de Abastecimiento: SalvaFaccha" }
     ];
-    otrosMarkers.forEach(m => L.marker(m.coords).addTo(map).bindPopup(m.label));
+    otrosMarkers.forEach(m => L.marker(m.coords).addTo(map2d).bindPopup(m.label));
 
     function actualizarSemaforo(nivel) {
       let color = "green", icono = "🟢", mensaje = "Sin riesgo significativo";
-
-      if (nivel === "medio") {
-        color = "orange"; icono = "🟠"; mensaje = "Riesgo moderado";
-      } else if (nivel === "alto") {
-        color = "red"; icono = "🔴"; mensaje = "¡Riesgo crítico!";
-      }
+      if (nivel === "medio") { color = "orange"; icono = "🟠"; mensaje = "Riesgo moderado"; }
+      else if (nivel === "alto") { color = "red"; icono = "🔴"; mensaje = "¡Riesgo crítico!"; }
 
       const icon = L.divIcon({
         html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:2px solid #000;
@@ -116,7 +127,60 @@
       plantaMarker.setPopupContent(`🏭 Planta Bellavista<br><strong>${icono} ${mensaje}</strong>`);
     }
 
-    document.getElementById("formulario").addEventListener("submit", async function(e) {
+    // Mapbox GL JS - Mapa 3D
+    mapboxgl.accessToken = 'pk.eyJ1IjoibHNidXJiYW5vIiwiYSI6ImNtZHc2ZWt4cTBvOTQybnE1dm1uNzJiYXIifQ.kWEho_yDoUxR5dIpddakDQ';  // ← Reemplaza esto
+    const map3d = new mapboxgl.Map({
+      container: 'map3d',
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
+      center: [-78.1438, -0.3775],
+      zoom: 12,
+      pitch: 60,
+      bearing: -20,
+      antialias: true
+    });
+
+    map3d.on('load', () => {
+      map3d.addSource('mapbox-dem', {
+        'type': 'raster-dem',
+        'url': 'mapbox://mapbox.terrain-rgb',
+        'tileSize': 512,
+        'maxzoom': 14
+      });
+
+      map3d.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+
+      map3d.addLayer({
+        'id': 'sky',
+        'type': 'sky',
+        'paint': {
+          'sky-type': 'atmosphere',
+          'sky-atmosphere-sun': [0.0, 0.0],
+          'sky-atmosphere-sun-intensity': 15
+        }
+      });
+
+      // Marcadores en 3D
+      map3d.addControl(new mapboxgl.Marker().setLngLat([-78.4613, -0.1806]).setPopup(new mapboxgl.Popup().setText("🏭 Planta Bellavista")).addTo(map3d));
+      otrosMarkers.forEach(m => {
+        map3d.addControl(new mapboxgl.Marker().setLngLat([m.coords[1], m.coords[0]]).setPopup(new mapboxgl.Popup().setText(m.label)));
+      });
+    });
+
+    // Alternador entre mapas
+    document.getElementById("btn2d").addEventListener("click", () => {
+      document.getElementById("map2d").style.display = "block";
+      document.getElementById("map3d").style.display = "none";
+      map2d.invalidateSize();
+    });
+
+    document.getElementById("btn3d").addEventListener("click", () => {
+      document.getElementById("map2d").style.display = "none";
+      document.getElementById("map3d").style.display = "block";
+      map3d.resize();
+    });
+
+    // Formulario
+    document.getElementById("formulario").addEventListener("submit", async function (e) {
       e.preventDefault();
       const fecha = document.getElementById("fecha").value;
       const error = document.getElementById("error");
@@ -135,7 +199,6 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error al obtener la predicción.");
 
-        // Mostrar resultados
         document.getElementById("fecha_resultado").textContent = data.fecha;
         document.getElementById("caudal").textContent = data.caudal_estimado;
         document.getElementById("temperatura").textContent = data.temperatura;
@@ -143,7 +206,6 @@
         document.getElementById("analisis_ia").innerHTML = data.analisis_ia || "<p>No disponible</p>";
         document.getElementById("resultado").style.display = "block";
 
-        // Semáforo
         const conclusion = data.analisis_ia.toLowerCase();
         let alerta = "bajo";
         if (conclusion.includes("rojo")) alerta = "alto";
@@ -156,11 +218,6 @@
         cargando.style.display = "none";
       }
     });
-
-  </script>
-</body>
-</html>
-
   </script>
 </body>
 </html>
