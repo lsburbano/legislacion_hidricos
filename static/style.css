@@ -14,6 +14,10 @@ button {
 input {
     padding: 5px;
 }
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
 
 .main-container {
   max-width: 700px;
@@ -26,15 +30,13 @@ input {
 }
 
 header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: rgba(255,255,255,0.95);
-  border-radius: 18px 18px 0 0;
-  box-shadow: 0 2px 8px rgba(31,38,135,0.07);
-  padding-bottom: 1rem;
-  margin-bottom: 2rem;
+  background: linear-gradient(90deg, #d7eefe 0%, #ffffff 100%);
+  padding: 2rem 1rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(31,38,135,0.07);
+  text-align: center;
 }
+
 
 h1 {
   font-weight: 700;
@@ -48,13 +50,15 @@ h1 {
 }
 
 #map {
-  height: 400px;
-  border-radius: 14px;
+  height: 350px;
+  border-radius: 16px;
   box-shadow: 0 4px 18px rgba(27,73,101,0.13);
   margin-bottom: 2rem;
   border: 2px solid #b6ccfe;
   transition: box-shadow 0.2s;
+  width: 100%;
 }
+
 
 #map:hover {
   box-shadow: 0 8px 32px rgba(27,73,101,0.18);
@@ -104,6 +108,10 @@ h1 {
 @keyframes spin {
   100% { transform: rotate(360deg);}
 }
+.card-body {
+  padding: 1.5rem !important;
+}
+
 
 .btn-success {
   background: linear-gradient(90deg, #1b4965 60%, #5fa8d3 100%);
@@ -118,6 +126,21 @@ h1 {
   background: linear-gradient(90deg, #5fa8d3 60%, #1b4965 100%);
   box-shadow: 0 4px 18px #b6ccfe55;
 }
+.btn-primary {
+  background: linear-gradient(90deg, #1b4965 0%, #5fa8d3 100%);
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 0.8rem 1.2rem;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(90deg, #5fa8d3 0%, #1b4965 100%);
+  box-shadow: 0 4px 12px rgba(27,73,101,0.2);
+}
+
 
 .form-label {
   font-weight: 500;
@@ -169,6 +192,12 @@ footer {
     height: 250px;
   }
   .resultado {
-    padding: 1rem 0.5rem;
-  }
+  background: #ffffff;
+  border-left: 6px solid #1b4965;
+  padding: 2rem 1.5rem;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  font-size: 1rem;
+}
+
 }
