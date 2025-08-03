@@ -11,7 +11,7 @@ app = Flask(__name__)
 # === Cliente OpenRouter para IA generativa ===
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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",  # ← REEMPLAZA con tu clave real
+    api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
 # === Cargar modelos SARIMA ===
