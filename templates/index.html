@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Predicción Hídrica Sistema Papallacta - Bellavista</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap + Leaflet -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="main-container">
+    <header>
+      <h1 class="text-center mb-2">💧 Predicción Hídrica Inteligente</h1>
+      <p class="text-center text-secondary mb-0 subtitulo">Sistema Papallacta - Bellavista</p>
+    </header>
+
+    <!-- 🌍 Mapa -->
+    <div id="map"></div>
+
+    <!-- 📆 Formulario -->
+    <form id="formulario" class="row g-3">
+      <div class="col-md-6">
+        <label for="fecha" class="form-label">Selecciona una fecha futura (YYYY-MM):</label>
+        <input type="month" id="fecha" name="fecha" class="form-control" required>
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <button type="submit" class="btn btn-success w-100 shadow">📊 Obtener Predicción</button>
+      </div>
+    </form>
+
+    <!-- ⏳ Indicador de carga -->
+    <div id="cargando" class="text-center my-3">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2 fw-semibold text-primary">Procesando análisis, por favor espera...</p>
+    </div>
+
+    <!-- 📈 Resultado -->
+    <div id="resultado" class="resultado" style="display:none;">
+      <h4 class="mb-3">📅 Fecha: <span id="fecha_resultado"></span></h4>
+      <div class="row mb-2">
+        <div class="col-4 text-center">
+          <span class="icono">💧</span><br>
+          <span class="fw-semibold">Caudal:</span>
+          <span id="caudal" class="d-block fs-5"></span>
+          <span class="text-muted unidad">l/s</span>
+        </div>
+        <div class="col-4 text-center">
+          <span class="icono">🌡️</span><br>
+          <span class="fw-semibold">Temp.:</span>
+          <span id="temperatura" class="d-block fs-5"></span>
+          <span class="text-muted unidad">°C</span>
+        </div>
+        <div class="col-4 text-center">
+          <span class="icono">☔</span><br>
+          <span class="fw-semibold">Precip.:</span>
+          <span id="precipitacion" class="d-block fs-5"></span>
+          <span class="text-muted unidad">mm</span>
+        </div>
+      </div>
+      <div id="analisis" class="mt-4 p-3">
+        <h5 class="mb-2">🧠 Análisis del Riesgo de Escasez:</h5>
+        <div id="analisis_ia"></div>
+      </div>
+    </div>
+
+    <!-- ⚠️ Error -->
+    <div id="error" class="alert alert-danger mt-3" style="display:none;"></div>
+  </div>
+  <footer>
+    &copy; 2024 Predicción Hídrica Inteligente · Sistema Papallacta - Bellavista
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    const map = L.map('map').setView([-0.3775, -78.1438], 10);
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
+    }).addTo(map);
+
+    const plantaCoords = [-0.18065948173307056, -78.4613084503937];
+    let plantaMarker = L.marker(plantaCoords).addTo(map).bindPopup("🏭 Planta Bellavista");
+
+    const otrosMarkers = [
+      { coords: [-0.3551660396455742, -78.08513557183424], label: "📍 H13 - Chalpi Grande" },
+      { coords: [-0.3774923958873509, -78.1437783896944], label: "📍 H34 - Papallacta" },
+      { coords: [-0.3842207347551541, -78.14559505947328], label: "📍 H36 - Tuminguina" },
+      { coords: [-0.226911, -78.162229], label: "🛑 Punto de Abastecimiento: SalvaFaccha" }
+    ];
+    otrosMarkers.forEach(m => L.marker(m.coords).addTo(map).bindPopup(m.label));
+
+    function actualizarSemaforo(nivel) {
+      let color = "green", icono = "🟢", mensaje = "Sin riesgo significativo";
+
+      if (nivel === "medio") {
+        color = "orange"; icono = "🟠"; mensaje = "Riesgo moderado";
+      } else if (nivel === "alto") {
+        color = "red"; icono = "🔴"; mensaje = "¡Riesgo crítico!";
+      }
+
+      const icon = L.divIcon({
+        html: `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:2px solid #000;
+                display:flex;align-items:center;justify-content:center;font-size:16px;">${icono}</div>`,
+        className: '', iconSize: [30, 30]
+      });
+
+      plantaMarker.setIcon(icon);
+      plantaMarker.setPopupContent(`🏭 Planta Bellavista<br><strong>${icono} ${mensaje}</strong>`);
+    }
+
+    document.getElementById("formulario").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const fecha = document.getElementById("fecha").value;
+      const error = document.getElementById("error");
+      const cargando = document.getElementById("cargando");
+      error.style.display = "none";
+      cargando.style.display = "block";
+      document.getElementById("resultado").style.display = "none";
+
+      try {
+        const res = await fetch("/predecir", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fecha })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Error al obtener la predicción.");
+
+        // Mostrar resultados
+        document.getElementById("fecha_resultado").textContent = data.fecha;
+        document.getElementById("caudal").textContent = data.caudal_estimado;
+        document.getElementById("temperatura").textContent = data.temperatura;
+        document.getElementById("precipitacion").textContent = data.precipitacion;
+        document.getElementById("analisis_ia").innerHTML = data.analisis_ia || "<p>No disponible</p>";
+        document.getElementById("resultado").style.display = "block";
+
+        // Semáforo
+        const conclusion = data.analisis_ia.toLowerCase();
+        let alerta = "bajo";
+        if (conclusion.includes("rojo")) alerta = "alto";
+        else if (conclusion.includes("amarillo")) alerta = "medio";
+        actualizarSemaforo(alerta);
+      } catch (err) {
+        error.textContent = err.message;
+        error.style.display = "block";
+      } finally {
+        cargando.style.display = "none";
+      }
+    });
+
+  </script>
+</body>
+</html>
+
+  </script>
+</body>
+</html>
