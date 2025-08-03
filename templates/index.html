@@ -139,32 +139,41 @@
       antialias: true
     });
 
-    map3d.on('load', () => {
-      map3d.addSource('mapbox-dem', {
-        'type': 'raster-dem',
-        'url': 'mapbox://mapbox.terrain-rgb',
-        'tileSize': 512,
-        'maxzoom': 14
-      });
-
-      map3d.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-
-      map3d.addLayer({
-        'id': 'sky',
-        'type': 'sky',
-        'paint': {
-          'sky-type': 'atmosphere',
-          'sky-atmosphere-sun': [0.0, 0.0],
-          'sky-atmosphere-sun-intensity': 15
-        }
-      });
-
-      // Marcadores en 3D
-      map3d.addControl(new mapboxgl.Marker().setLngLat([-78.4613, -0.1806]).setPopup(new mapboxgl.Popup().setText("🏭 Planta Bellavista")).addTo(map3d));
-      otrosMarkers.forEach(m => {
-        map3d.addControl(new mapboxgl.Marker().setLngLat([m.coords[1], m.coords[0]]).setPopup(new mapboxgl.Popup().setText(m.label)));
-      });
+      map3d.on('load', () => {
+    map3d.addSource('mapbox-dem', {
+      'type': 'raster-dem',
+      'url': 'mapbox://mapbox.terrain-rgb',
+      'tileSize': 512,
+      'maxzoom': 14
     });
+
+    map3d.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+
+    map3d.addLayer({
+      'id': 'sky',
+      'type': 'sky',
+      'paint': {
+        'sky-type': 'atmosphere',
+        'sky-atmosphere-sun': [0.0, 0.0],
+        'sky-atmosphere-sun-intensity': 15
+      }
+    });
+
+        // ✅ Marcador principal
+        new mapboxgl.Marker()
+          .setLngLat([-78.4613, -0.1806])
+          .setPopup(new mapboxgl.Popup().setText("🏭 Planta Bellavista"))
+          .addTo(map3d);
+
+        // ✅ Otros marcadores
+        otrosMarkers.forEach(m => {
+          new mapboxgl.Marker()
+            .setLngLat([m.coords[1], m.coords[0]])
+            .setPopup(new mapboxgl.Popup().setText(m.label))
+            .addTo(map3d);
+        });
+    });
+
 
     // Alternador entre mapas
     document.getElementById("btn2d").addEventListener("click", () => {
