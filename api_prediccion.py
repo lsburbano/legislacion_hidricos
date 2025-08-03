@@ -8,12 +8,10 @@ import os
 
 app = Flask(__name__)
 
-# === Cargar la API key desde variable de entorno personalizada ===
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENROUTER_API_KEY")
-
 # === Cliente OpenRouter para IA generativa ===
 client = OpenAI(
-    base_url="https://openrouter.ai/api/v1"
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
 # === Cargar modelos SARIMA ===
