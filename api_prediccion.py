@@ -71,7 +71,8 @@ def predecir():
             pred_prec = "No disponible"
         else:
             pred_prec = modelo_precipitacion.get_forecast(steps=meses_a_predecir_prec).predicted_mean.iloc[-1]
-            pred_prec = round(pred_prec, 2*30)
+            pred_prec = round(pred_prec * 30, 2)
+
 
         poblacion_total = 1120000
         
